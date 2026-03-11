@@ -1,5 +1,4 @@
 fastapi
 mangum
 sqlalchemy
-pandas
 psycopg2-binary
