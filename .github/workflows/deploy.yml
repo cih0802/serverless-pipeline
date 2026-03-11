@@ -1,0 +1,45 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches: [ "main" ] # 메인 브랜치에 코드가 올라가면 실행
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. 소스 코드 가져오기
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. AWS 자격 증명 설정
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # 3. Amazon ECR 로그인
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    # 4. 도커 이미지 빌드 및 ECR 푸시
+    - name: Build, Tag, and Push Image to ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: etf-api-repo # 생성하신 ECR 리포지토리 이름
+        IMAGE_TAG: latest
+      run: |
+        # Lambda 호환을 위해 linux/amd64로 빌드
+        docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    # 5. AWS Lambda 함수 업데이트
+    - name: Update Lambda Function
+      run: |
+        aws lambda update-function-code \
+          --function-name etf-api-service \
+          --image-uri ${{ steps.login-ecr.outputs.registry }}/etf-api-repo:latest
