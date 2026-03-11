@@ -1,0 +1,13 @@
+# Environments
+.env
+.venv/
+venv/
+__pycache__/
+
+# docker
+.dockerignore
+
+# aws
+.aws_venv/
+aws/
+awscliv2.zip
