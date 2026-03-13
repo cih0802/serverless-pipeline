@@ -22,13 +22,14 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 # 🛡️ Pydantic Schema
 # ==========================================
 class ETFMetricResponse(BaseModel):
-    TRADE_DATE: date = Field(..., description="거래 일자 (YYYY-MM-DD)")
-    TICKER: str = Field(..., description="ETF 종목 티커 (예: SPY)")
-    USD_CLOSE_PRICE: float | None = Field(None, description="USD 기준 종가")
-    USD_KRW_RATE: float | None = Field(None, description="당일 원/달러 환율")
-    KRW_CLOSE_PRICE: float | None = Field(None, description="KRW 환산 종가")
-    USD_DAILY_RETURN_PCT: float | None = Field(None, description="USD 기준 일일 수익률(%)")
-    KRW_DAILY_RETURN_PCT: float | None = Field(None, description="KRW 환산 일일 수익률(%)")
+    # DB 컬럼명과 완벽히 일치하도록 모두 소문자로 변경합니다.
+    trade_date: date = Field(..., description="거래 일자 (YYYY-MM-DD)")
+    ticker: str = Field(..., description="ETF 종목 티커 (예: SPY)")
+    usd_close_price: float | None = Field(None, description="USD 기준 종가")
+    usd_krw_rate: float | None = Field(None, description="당일 원/달러 환율")
+    krw_close_price: float | None = Field(None, description="KRW 환산 종가")
+    usd_daily_return_pct: float | None = Field(None, description="USD 기준 일일 수익률(%)")
+    krw_daily_return_pct: float | None = Field(None, description="KRW 환산 일일 수익률(%)")
 
 # 🎯 제거됨: clean_nan_to_none 함수 (SQLAlchemy가 NULL을 None으로 자동 처리함)
 
@@ -63,7 +64,7 @@ def get_ticker_metrics(
     ticker: str = Path(..., min_length=1, description="조회할 ETF 티커")
 ):
     try:
-        query = text('SELECT * FROM daily_investment_metrics WHERE UPPER("TICKER") = :ticker')
+        query = text('SELECT * FROM daily_investment_metrics WHERE UPPER(ticker) = :ticker')
         
         with engine.connect() as conn:
             result = conn.execute(query, {"ticker": ticker.upper()})
